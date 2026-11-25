@@ -18,6 +18,28 @@ https://www.binance.com/en/survey/fb26d2bd25e04329b1ba77c7b3811d23
   `demo/agentboard-demo.mp4` — real screenshots of the live product +
   English voiceover; also attached to the submission chat message)
 - **GitHub (open source):** https://github.com/nurhidayat1234/agentboard
+- **Telegram:** @dellkomputer12
+- **Team name:** hawkeye (Nurhidayat)
+
+## Submission status: ✅ SUBMITTED 25 Nov 2026, 11:08 WIB (04:08 UTC)
+
+- Survey: https://www.binance.com/en/survey/fb26d2bd25e04329b1ba77c7b3811d23
+- Confirmation shown after submit: green checkmark, "Survey already completed" —
+  "You have already completed this survey. Thanks for your support to Binance."
+  An "Edit Response" button is shown, so the response is recorded and editable.
+- All 19 questions filled and read back against the authorised values before
+  submitting (6 pages: Basic Project Information, Agent ID Integration,
+  BNB Chain Contract Information, Project Showcase Materials, Team and Contact
+  Information, Participation Declaration — all four declarations ticked).
+- Use cases selected: Identity Recognition/Verification, Permission Management /
+  Access Control, Payment / Settlement, Agent Identity Binding / Identification.
+- Launched: Yes. Agent ID integration completed with on-chain interactions: Yes.
+- Deadline was 9 Dec 2026, 08:00 UTC — submitted 14 days early.
+- Next milestones: internal review 9–17 Dec 2026, public review 17–20 Dec 2026,
+  prizes within 14 working days after public announcement, to the reward
+  receiving address above. Pioneer Award ranking is driven by real on-chain
+  data (interacting Agent ID holder addresses, tx volume/count) — distribution
+  work (getting Agent ID holders to use the mainnet contract) still open.
 - **BscScan:** https://bscscan.com/address/0x9cDAE4b842d5F3d0f43323e938BbbA9626dd03cE
   (source verified via Sourcify exact_match — creation + runtime)
 - **Agent ID usage description (draft):**

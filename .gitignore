@@ -1,0 +1,6 @@
+node_modules/
+.env
+.env.*
+deployer-testnet-key.txt
+artifacts/
+cache/

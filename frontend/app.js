@@ -23,11 +23,11 @@ const NETWORKS = {
   testnet: {
     label: "BSC Testnet",
     chainId: 97,
-    contract: "0x5aCafb6d81e820Aa2FfEC7e616f26958147A7cEF",
+    contract: "0xC4353D23D3b78FDbc7e01771Fa24eae4BF62e7bD", // V2, GATE_ENABLED=false: open board, no Agent ID needed
     abiKey: "AGENTBOARD_V2_ABI",
     agentId: "0x9cDAE4b842d5F3d0f43323e938BbbA9626dd03cE", // MockAgentID
     rpcs: ["https://data-seed-prebsc-1-s1.binance.org:8545/", "https://data-seed-prebsc-2-s1.binance.org:8545/", "https://bsc-testnet-dataseed.bnbchain.org/"],
-    gasPriceGwei: "3",
+    gasPriceGwei: null, // testnet: let the wallet use the network price (~0.1 gwei)
     hasPoints: true,
   },
 };
@@ -83,6 +83,12 @@ function shortAddr(a) {
   return a ? a.slice(0, 6) + "…" + a.slice(-4) : "-";
 }
 
+// Transaction overrides: mainnet pins a low gas price; testnet leaves it to
+// the wallet (network price, ~0.1 gwei — testnet must stay cheap to try).
+function gasOpts() {
+  return NET.gasPriceGwei ? { gasPrice: ethers.parseUnits(NET.gasPriceGwei, "gwei") } : {};
+}
+
 async function switchChain() {
   const chainIdHex = "0x" + NET.chainId.toString(16);
   try {
@@ -115,19 +121,36 @@ async function connect() {
     $("walletInfo").textContent = "Terhubung: " + shortAddr(myAddress) + " (" + NET.label + ")";
     $("walletInfo").title = myAddress;
     $("connectBtn").textContent = "Terhubung";
+    // Testnet V2 runs with the Agent ID gate OFF: anyone with a testnet
+    // wallet can use the board. Mainnet v1 still requires an Agent ID.
+    let gateOn = true;
     try {
-      const agentId = new ethers.Contract(NET.agentId, AGENT_ID_ABI, provider);
-      const balance = await agentId.balanceOf(myAddress);
-      isAgentHolder = balance > 0n;
-    } catch (e) {
-      isAgentHolder = false;
+      const rc = await getReadContract();
+      if (typeof rc.GATE_ENABLED === "function") gateOn = await rc.GATE_ENABLED();
+    } catch (e) { gateOn = true; }
+    if (!gateOn) {
+      isAgentHolder = true; // no gate on this network — treat as pass
+      $("agentIdInfo").textContent = "✓ Testnet terbuka — tanpa syarat Agent ID, siapa pun bisa coba board ini.";
+      $("agentIdInfo").className = "ok";
+    } else {
+      try {
+        const agentId = new ethers.Contract(NET.agentId, AGENT_ID_ABI, provider);
+        const balance = await agentId.balanceOf(myAddress);
+        isAgentHolder = balance > 0n;
+      } catch (e) {
+        isAgentHolder = false;
+      }
+      $("agentIdInfo").textContent = isAgentHolder
+        ? "✓ Kamu pemegang Agent ID — bisa buat dan klaim task."
+        : "Alamat ini tidak terdeteksi memegang Agent ID di " + NET.label + " — buat/klaim task akan ditolak contract.";
+      $("agentIdInfo").className = isAgentHolder ? "ok" : "bad";
     }
-    $("agentIdInfo").textContent = isAgentHolder
-      ? "✓ Kamu pemegang Agent ID — bisa buat dan klaim task."
-      : "Alamat ini tidak terdeteksi memegang Agent ID di " + NET.label + " — buat/klaim task akan ditolak contract.";
-    $("agentIdInfo").className = isAgentHolder ? "ok" : "bad";
     await loadTasks();
     await loadDashboard();
+    // Stay clickable so the user can reconnect after switching accounts in
+    // their wallet (the button used to stay disabled after the first connect).
+    $("connectBtn").disabled = false;
+    $("connectBtn").textContent = "Terhubung ✓ (klik untuk refresh)";
   } catch (e) {
     $("walletInfo").textContent = "Gagal terhubung: " + (e.reason || e.message || e);
     $("connectBtn").disabled = false;
@@ -150,15 +173,18 @@ async function createTask() {
       return;
     }
   }
+  const beforeCount = myTasksCache.length;
   $("createBtn").disabled = true;
   try {
     const value = ethers.parseEther(reward);
-    const gasPrice = ethers.parseUnits(NET.gasPriceGwei, "gwei");
     const tx = NET.hasPoints
-      ? await c.createTask(title, taskPoints, { value, gasPrice })
-      : await c.createTask(title, { value, gasPrice });
+      ? await c.createTask(title, taskPoints, { value, ...gasOpts() })
+      : await c.createTask(title, { value, ...gasOpts() });
     $("createMsg").textContent = "Tx dikirim: " + tx.hash + " — konfirmasi di wallet, tunggu selesai.";
     await tx.wait();
+    // BSC public RPCs can lag a block behind; wait until the new task is
+    // actually readable before re-rendering, otherwise it looks missing.
+    await waitForTaskCount(beforeCount + 1);
     $("createMsg").textContent = "✓ Task dibuat" + (NET.hasPoints ? ` (${taskPoints} point).` : ".");
     $("taskTitle").value = ""; $("taskReward").value = "";
     await loadTasks();
@@ -169,14 +195,39 @@ async function createTask() {
   }
 }
 
+async function waitForTaskCount(minCount) {
+  try {
+    const c = await getReadContract();
+    for (let i = 0; i < 10; i++) {
+      if (Number(await c.taskCount()) >= minCount) return;
+      await new Promise((r) => setTimeout(r, 3000));
+    }
+  } catch (e) { /* fall through: loadTasks will show whatever reads */ }
+}
+
+async function waitForTaskStatus(id, expected) {
+  try {
+    const c = await getReadContract();
+    for (let i = 0; i < 10; i++) {
+      const t = await c.tasks(id);
+      if (Number(t.status) === expected) return;
+      await new Promise((r) => setTimeout(r, 3000));
+    }
+  } catch (e) { /* fall through */ }
+}
+
+const EXPECTED_STATUS = { claimTask: 1, submitProof: 2, approveTask: 3, cancelTask: 4 };
+
 async function act(fnName, id, arg) {
   const c = getWriteContract(); if (!c) return;
   try {
-    const gasPrice = ethers.parseUnits(NET.gasPriceGwei, "gwei");
     const tx = arg !== undefined
-      ? await c[fnName](id, arg, { gasPrice })
-      : await c[fnName](id, { gasPrice });
+      ? await c[fnName](id, arg, gasOpts())
+      : await c[fnName](id, gasOpts());
     await tx.wait();
+    // Public RPCs can lag a block behind; wait until the new status is
+    // actually readable before re-rendering.
+    if (EXPECTED_STATUS[fnName] !== undefined) await waitForTaskStatus(id, EXPECTED_STATUS[fnName]);
     await loadTasks();
     await loadDashboard();
   } catch (e) {
@@ -188,7 +239,7 @@ async function claimBNB() {
   const c = getWriteContract(); if (!c) return;
   $("claimBtn").disabled = true;
   try {
-    const tx = await c.claimBNB({ gasPrice: ethers.parseUnits(NET.gasPriceGwei, "gwei") });
+    const tx = await c.claimBNB(gasOpts());
     $("claimMsg").textContent = "Tx dikirim: " + tx.hash + " — tunggu selesai.";
     await tx.wait();
     $("claimMsg").textContent = "✓ BNB berhasil diklaim.";
@@ -258,13 +309,19 @@ function renderMyTasks() {
   }
 }
 
+// Guard against overlapping loadTasks runs (refresh/connect/action can fire
+// while a previous load is still awaiting RPC) — without it, two runs can
+// both append cards and the list shows duplicates.
+let loadTasksRun = 0;
 async function loadTasks() {
+  const run = ++loadTasksRun;
   const box = $("tasks");
   const label = $("taskCountLabel");
   box.innerHTML = '<p class="muted">Memuat task dari ' + NET.label + '…</p>';
   try {
     const c = await getReadContract();
     const count = Number(await c.taskCount());
+    if (run !== loadTasksRun) return; // superseded by a newer load
     if (label) label.textContent = count === 0 ? "Belum ada task" : count + (count === 1 ? " task" : " task");
     myTasksCache = [];
     if (count === 0) {
@@ -274,6 +331,7 @@ async function loadTasks() {
     }
     box.innerHTML = "";
     for (let id = count; id >= 1; id--) {
+      if (run !== loadTasksRun) return; // superseded mid-loop
       const t = await c.tasks(id);
       const status = STATUS[Number(t.status)];
       const reward = ethers.formatEther(t.reward);
@@ -348,8 +406,10 @@ async function loadTasks() {
       card.appendChild(actions);
       box.appendChild(card);
     }
+    if (run !== loadTasksRun) return;
     renderMyTasks();
   } catch (e) {
+    if (run !== loadTasksRun) return;
     if (label) label.textContent = "Gagal memuat";
     box.innerHTML = '<div class="empty"><p><b>Gagal memuat task.</b></p><p class="muted">' +
       escapeHtml(e.reason || e.message || e) +

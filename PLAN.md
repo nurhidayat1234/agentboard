@@ -147,3 +147,35 @@ tidak rusak sebelum migrasi.
    contract yang disubmit. Setelah migrasi, interaksi pindah ke V2; Task #1
    di v1 tetap tercatat di v1. Bukan masalah untuk penilaian selama
    submission menunjuk contract yang aktif dipakai.
+
+## Testnet terbuka — tanpa Agent ID (perubahan 25 Nov 2026, ~13:0x WIB)
+
+Atas permintaan hawkeye ("task di testnet harus bisa dikerjakan TANPA
+Agent ID"), testnet dibuka untuk siapa pun:
+
+- Contract V2 mendapat `bool immutable GATE_ENABLED` (constructor
+  `TaskBoardV2(address agentId, bool gateEnabled)`); modifier
+  `onlyAgentIDHolder` melewati cek `balanceOf` saat gate OFF.
+- Testnet V2 di-redeploy dengan gate OFF:
+  `0xC4353D23D3b78FDbc7e01771Fa24eae4BF62e7bD` (V2 lama ber-gate
+  `0x5aCafb…` ditinggalkan beserta 3 task tesnya). Deploy script baca
+  `GATE_ENABLED=false` dari env; default tetap `true` — **mainnet WAJIB
+  deploy dengan gate ON** (itu inti produk untuk hackathon).
+- Frontend testnet: sesudah connect, baca `GATE_ENABLED()`; kalau OFF,
+  tampil "Testnet terbuka — tanpa syarat Agent ID" (bukan pesan penolakan),
+  dan tombol aksi tidak lagi diblokir. Script agent (`claim.js`) juga
+  melewati cek Agent ID saat gate OFF (`common.js` baca `GATE_ENABLED()`).
+- **Mainnet tidak berubah**: v1 `0x9cDAE4…` tetap mensyaratkan Agent ID,
+  submission tidak disentuh.
+- Verifikasi: alur penuh dengan wallet TANPA Mock Agent ID, dua jalur —
+  (1) script agent: 3 task 40+50+10 point, kunci di 40/90, klaim 0,006 tBNB
+  di 100 ("V2 OPEN-BOARD TESTNET FLOW OK"); (2) website UI lewat wallet
+  browser (Playwright + provider EIP-1193 tiruan): buat → klaim → bukti →
+  approve → dashboard 100 point → Claim BNB ("BROWSER E2E OPEN-BOARD OK").
+- Temuan sampingan saat pengujian UI (sudah diperbaiki di frontend):
+  tombol Connect tetap disabled sesudah connect (tidak bisa reconnect
+  setelah ganti akun — sekarang tetap bisa diklik), `loadTasks` bisa
+  berjalan tumpang tindih dan menggandakan kartu (sekarang ada guard
+  run-id), dan gas testnet 3 gwei membuat estimasi gagal untuk wallet
+  kecil (testnet sekarang memakai harga gas jaringan ~0,1 gwei; mainnet
+  tetap 1 gwei).

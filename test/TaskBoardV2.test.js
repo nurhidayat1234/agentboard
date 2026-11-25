@@ -2,12 +2,12 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 describe("TaskBoardV2 — points system", function () {
-  async function deploy() {
+  async function deploy(gateEnabled = true) {
     const [creator, claimer, stranger] = await ethers.getSigners();
     const Mock = await ethers.getContractFactory("MockAgentID");
     const mock = await Mock.deploy();
     const Board = await ethers.getContractFactory("TaskBoardV2");
-    const board = await Board.deploy(await mock.getAddress());
+    const board = await Board.deploy(await mock.getAddress(), gateEnabled);
     await mock.setBalance(creator.address, 1);
     await mock.setBalance(claimer.address, 1);
     // stranger holds no Agent ID on purpose
@@ -100,5 +100,25 @@ describe("TaskBoardV2 — points system", function () {
     await board.connect(creator).createTask("T", 10, { value: ethers.parseEther("0.01") });
     await expect(board.connect(creator).claimTask(1))
       .to.be.revertedWith("AgentBoard: creator cannot claim own task");
+  });
+
+  it("gate OFF: anyone can use the board without an Agent ID (testnet mode)", async function () {
+    const { board } = await deploy(false);
+    expect(await board.GATE_ENABLED()).to.equal(false);
+    // signers[2] and [3] never received a mock Agent ID in deploy().
+    const [, , noIdCreator, noIdClaimer] = await ethers.getSigners();
+    await board.connect(noIdCreator).createTask("Open task", 100, { value: ethers.parseEther("0.01") });
+    await board.connect(noIdClaimer).claimTask(1);
+    await board.connect(noIdClaimer).submitProof(1, "https://example.com/proof");
+    await board.connect(noIdCreator).approveTask(1);
+    expect(await board.points(noIdClaimer.address)).to.equal(100);
+    expect(await board.pendingBNB(noIdClaimer.address)).to.equal(ethers.parseEther("0.01"));
+    await expect(board.connect(noIdClaimer).claimBNB()).to.emit(board, "BNBClaimed");
+    expect(await board.pendingBNB(noIdClaimer.address)).to.equal(0);
+  });
+
+  it("gate ON (default): GATE_ENABLED is true", async function () {
+    const { board } = await deploy();
+    expect(await board.GATE_ENABLED()).to.equal(true);
   });
 });

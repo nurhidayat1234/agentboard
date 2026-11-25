@@ -21,7 +21,7 @@ async function main() {
     if (!args.id) process.exit(1);
     return;
   }
-  const { board, provider, address, agentId, net } = await c.getReadBoard(args);
+  const { board, provider, address, agentId, net, gateEnabled } = await c.getReadBoard(args);
   const task = await c.describeTask(board, args.id);
   if (task.status !== "Open") c.fail(`Task #${task.id} is ${task.status}, not Open — cannot claim.`);
   const sender = c.getSenderAddress(args);
@@ -34,10 +34,15 @@ async function main() {
   if (sender.toLowerCase() === task.creator.toLowerCase()) {
     c.fail("The creator cannot claim their own task.");
   }
-  // Agent ID check (real registry on mainnet, MockAgentID on testnet).
-  const registry = new ethers.Contract(agentId, ["function balanceOf(address) view returns (uint256)"], provider);
-  const idBalance = await registry.balanceOf(sender);
-  if (idBalance === 0n) c.fail(`Sender ${sender} holds no Agent ID on ${net.label} — the contract would reject the claim.`);
+  // Agent ID check (real registry on mainnet, MockAgentID on testnet) —
+  // skipped entirely when the contract's gate is OFF (testnet open board).
+  if (gateEnabled) {
+    const registry = new ethers.Contract(agentId, ["function balanceOf(address) view returns (uint256)"], provider);
+    const idBalance = await registry.balanceOf(sender);
+    if (idBalance === 0n) c.fail(`Sender ${sender} holds no Agent ID on ${net.label} — the contract would reject the claim.`);
+  } else {
+    console.log("Gate is OFF on this board (testnet open mode) — no Agent ID needed.");
+  }
   console.log(`Task #${task.id} — ${task.title} (${task.reward} BNB, ${task.status})`);
   console.log(`Sender ${sender} holds an Agent ID. Simulating claimTask(${task.id})…`);
   const data = c.encodeCall("claimTask", [task.id]);

@@ -33,9 +33,15 @@ contract TaskBoardV2 is ReentrancyGuard {
     /// @notice Maximum points a single task can carry.
     uint256 public constant MAX_POINTS_PER_TASK = 100;
 
-    constructor(address agentId) {
-        require(agentId != address(0), "AgentBoard: agentId required");
+    /// @notice When false, the Agent ID gate is OFF: anyone can
+    /// create/claim tasks. Testnet only — mainnet MUST deploy with true
+    /// (the Agent ID gate is the product's core for the hackathon).
+    bool public immutable GATE_ENABLED;
+
+    constructor(address agentId, bool gateEnabled) {
+        require(!gateEnabled || agentId != address(0), "AgentBoard: agentId required when gate is on");
         AGENT_ID = IAgentID(agentId);
+        GATE_ENABLED = gateEnabled;
     }
 
     enum Status {
@@ -76,7 +82,9 @@ contract TaskBoardV2 is ReentrancyGuard {
     event BNBClaimed(address indexed claimer, uint256 amount);
 
     modifier onlyAgentIDHolder(address account) {
-        require(AGENT_ID.balanceOf(account) > 0, "AgentBoard: caller holds no Agent ID");
+        if (GATE_ENABLED) {
+            require(AGENT_ID.balanceOf(account) > 0, "AgentBoard: caller holds no Agent ID");
+        }
         _;
     }
 

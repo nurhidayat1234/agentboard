@@ -13,6 +13,9 @@ const path = require("path");
 // The record is written to deployments/<network>-v2.json so the v1 record
 // (and the submitted mainnet v1 address) is never overwritten.
 const AGENT_ID = process.env.AGENT_ID_OVERRIDE || "0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F";
+// Gate switch: "true" (default — mainnet MUST use true) or "false" (testnet
+// open board: anyone can create/claim without an Agent ID).
+const GATE_ENABLED = process.env.GATE_ENABLED !== "false";
 
 async function main() {
   const [deployer] = await hre.ethers.getSigners();
@@ -23,17 +26,18 @@ async function main() {
   if (balance === 0n) throw new Error("Deployer has 0 BNB — fund it first (see DEPLOY-TESTNET.md).");
 
   const Board = await hre.ethers.getContractFactory("TaskBoardV2");
-  const board = await Board.deploy(AGENT_ID);
+  const board = await Board.deploy(AGENT_ID, GATE_ENABLED);
   await board.waitForDeployment();
   const address = await board.getAddress();
   console.log("TaskBoardV2 deployed at:", address);
   console.log("Agent ID registry:", AGENT_ID);
+  console.log("GATE_ENABLED:", GATE_ENABLED);
   console.log("POINTS_TO_CLAIM:", (await board.POINTS_TO_CLAIM()).toString());
 
   const outDir = path.join(__dirname, "..", "deployments");
   fs.mkdirSync(outDir, { recursive: true });
   const out = path.join(outDir, hre.network.name + "-v2.json");
-  fs.writeFileSync(out, JSON.stringify({ network: hre.network.name, chainId: Number((await hre.ethers.provider.getNetwork()).chainId), contract: "TaskBoardV2", abi: "abi-v2.js", address, agentId: AGENT_ID, deployer: deployer.address, deployedAt: new Date().toISOString() }, null, 2));
+  fs.writeFileSync(out, JSON.stringify({ network: hre.network.name, chainId: Number((await hre.ethers.provider.getNetwork()).chainId), contract: "TaskBoardV2", abi: "abi-v2.js", address, agentId: AGENT_ID, gateEnabled: GATE_ENABLED, deployer: deployer.address, deployedAt: new Date().toISOString() }, null, 2));
   console.log("Deployment record written to:", out);
 }
 

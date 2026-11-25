@@ -33,7 +33,7 @@ Output: contract address + `deployments/bscTestnet.json`.
   ```bash
   node scripts/generate-abi.js
   ```
-- Serve `frontend/` and test the full flow. Note: the real Agent ID registry only exists on BNB mainnet, so on BSC Testnet the gate uses a MockAgentID (see step 2b below) — grant mock Agent IDs to test wallets with `setBalance(address, 1)` on the mock contract. Mainnet deploy uses the real registry.
+- Serve `frontend/` and test the full flow. Note: the real Agent ID registry only exists on BNB mainnet. The testnet V2 board runs with the Agent ID gate OFF (`GATE_ENABLED=false`, see `contracts/TaskBoardV2.sol`) — anyone with a testnet wallet can create/claim tasks there, no Mock Agent ID needed. (The old gate-ON testnet V2 at 0x5aCafb6d81e820Aa2FfEC7e616f26958147A7cEF is abandoned; the live testnet V2 is 0xC4353D23D3b78FDbc7e01771Fa24eae4BF62e7bD.) Mainnet deploy uses the real registry with the gate ON — that is the product.
 
 ## Mainnet deploy (needs hawkeye's explicit go-ahead + BNB gas)
 ```bash

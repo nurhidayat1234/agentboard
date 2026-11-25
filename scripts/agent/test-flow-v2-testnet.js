@@ -2,14 +2,17 @@
 // on BSC Testnet, driven through the real agent scripts.
 //   node scripts/agent/test-flow-v2-testnet.js
 //
-// TESTNET ONLY. It refuses to run on mainnet. Flow:
-//   deployer creates 3 tasks (40 + 50 + 10 points, 0.002 tBNB reward each)
-//   worker claims + proves each; deployer approves each
+// TESTNET ONLY. It refuses to run on mainnet. The board runs with the Agent
+// ID gate OFF, so this test deliberately uses wallets that hold NO Mock
+// Agent ID at all — proving anyone with a testnet wallet can use the board.
+// Flow:
+//   fresh creator (no ID) creates 3 tasks (40 + 50 + 10 points, 0.002 tBNB each)
+//   fresh worker (no ID) claims + proves each; creator approves each
 //   after 40 pts: claimBNB is LOCKED (plan mode prints LOCKED, nothing sent)
 //   after 90 pts: still LOCKED
 //   after 100 pts: claim-bnb.js --execute withdraws the 0.006 tBNB pending
 // Private keys are passed to child processes through env vars only and are
-// NEVER printed. The throwaway worker key is discarded after the run.
+// NEVER printed. The throwaway keys are discarded after the run.
 const { spawnSync } = require("child_process");
 const { ethers } = require("ethers");
 const fs = require("fs");
@@ -17,7 +20,6 @@ const path = require("path");
 
 const ROOT = path.join(__dirname, "..", "..");
 const TESTNET_RPC = "https://data-seed-prebsc-1-s1.binance.org:8545/";
-const BOARD_V2_TESTNET = "0x5aCafb6d81e820Aa2FfEC7e616f26958147A7cEF";
 const MOCK_AGENT_ID = "0x9cDAE4b842d5F3d0f43323e938BbbA9626dd03cE";
 
 function runAgent(script, args, key) {
@@ -34,6 +36,9 @@ function runAgent(script, args, key) {
 
 async function main() {
   const deployerKey = fs.readFileSync(path.join(ROOT, "deployer-testnet-key.txt"), "utf8").trim();
+  const dep = JSON.parse(fs.readFileSync(path.join(ROOT, "deployments", "bscTestnet-v2.json"), "utf8"));
+  if (dep.gateEnabled !== false) throw new Error("Refusing: testnet V2 deployment must have gateEnabled=false for this test.");
+  const BOARD_V2_TESTNET = dep.address;
   const abi = JSON.parse(
     fs.readFileSync(path.join(ROOT, "frontend", "abi-v2.js"), "utf8")
       .replace(/^window\.AGENTBOARD_V2_ABI\s*=\s*/, "").replace(/;\s*$/, "")
@@ -41,25 +46,32 @@ async function main() {
   const provider = new ethers.JsonRpcProvider(TESTNET_RPC, 97);
   const deployer = new ethers.Wallet(deployerKey, provider);
   const board = new ethers.Contract(BOARD_V2_TESTNET, abi, deployer);
-  const mock = new ethers.Contract(MOCK_AGENT_ID, ["function setBalance(address,uint256)", "function balanceOf(address) view returns (uint256)"], deployer);
+  const mock = new ethers.Contract(MOCK_AGENT_ID, ["function balanceOf(address) view returns (uint256)"], provider);
+  console.log("Board:", BOARD_V2_TESTNET, "| GATE_ENABLED:", await board.GATE_ENABLED());
 
-  // 1. Fresh worker wallet (throwaway): fund + grant mock Agent ID.
+  // 1. Fresh creator + worker wallets (throwaway). NEITHER gets a mock Agent ID.
+  const creator = ethers.Wallet.createRandom().connect(provider);
   const worker = ethers.Wallet.createRandom().connect(provider);
-  console.log("Worker (claimer):", worker.address);
-  await (await deployer.sendTransaction({ to: worker.address, value: ethers.parseEther("0.01"), gasPrice: ethers.parseUnits("3", "gwei") })).wait();
-  await (await mock.setBalance(worker.address, 1, { gasPrice: ethers.parseUnits("3", "gwei") })).wait();
-  console.log("Worker funded + mock Agent ID granted.");
+  console.log("Creator (no Agent ID):", creator.address);
+  console.log("Worker (no Agent ID):", worker.address);
+  await (await deployer.sendTransaction({ to: creator.address, value: ethers.parseEther("0.01"), gasPrice: ethers.parseUnits("3", "gwei") })).wait();
+  await (await deployer.sendTransaction({ to: worker.address, value: ethers.parseEther("0.005"), gasPrice: ethers.parseUnits("3", "gwei") })).wait();
+  if ((await mock.balanceOf(creator.address)) !== 0n) throw new Error("Test setup wrong: creator holds a mock Agent ID");
+  if ((await mock.balanceOf(worker.address)) !== 0n) throw new Error("Test setup wrong: worker holds a mock Agent ID");
+  console.log("Both wallets confirmed holding NO Mock Agent ID. Funding done.");
+  const creatorKey = creator.privateKey;
   const workerKey = worker.privateKey;
+  const boardAsCreator = board.connect(creator);
 
   // 2. Three tasks: 40 + 50 + 10 points, 0.002 tBNB reward each.
   const plan = [40, 50, 10];
   for (let i = 0; i < plan.length; i++) {
     const taskId = Number(await board.taskCount()) + 1;
-    await (await board.createTask(`V2 points test task ${taskId}`, plan[i], { value: ethers.parseEther("0.002"), gasPrice: ethers.parseUnits("3", "gwei") })).wait();
-    console.log(`Task #${taskId} created (${plan[i]} points, 0.002 tBNB escrow).`);
+    await (await boardAsCreator.createTask(`V2 open-board test task ${taskId}`, plan[i], { value: ethers.parseEther("0.002"), gasPrice: ethers.parseUnits("3", "gwei") })).wait();
+    console.log(`Task #${taskId} created by no-ID creator (${plan[i]} points, 0.002 tBNB escrow).`);
     runAgent("claim.js", ["--network", "testnet", "--id", String(taskId), "--execute"], workerKey);
     runAgent("submit-proof.js", ["--network", "testnet", "--id", String(taskId), "--proof", "https://github.com/nurhidayat1234/agentboard", "--execute"], workerKey);
-    runAgent("approve.js", ["--network", "testnet", "--id", String(taskId), "--execute"], deployerKey);
+    runAgent("approve.js", ["--network", "testnet", "--id", String(taskId), "--execute"], creatorKey);
     const pts = Number(await board.points(worker.address));
     const pending = await board.pendingBNB(worker.address);
     console.log(`After task #${taskId}: worker points=${pts}, pending=${ethers.formatEther(pending)} tBNB.`);
@@ -95,7 +107,7 @@ async function main() {
   if (pendingAfter !== 0n) throw new Error("Flow failed: pending not fully withdrawn");
   if (ptsAfter !== 100) throw new Error("Flow failed: points should stay at 100 after claiming");
   if (!(workerAfter > workerBefore)) throw new Error("Flow failed: worker did not receive the BNB");
-  console.log("V2 TESTNET FLOW OK");
+  console.log("V2 OPEN-BOARD TESTNET FLOW OK (no Agent ID anywhere)");
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

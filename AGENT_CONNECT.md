@@ -135,6 +135,16 @@ node -e "const c=require('./scripts/agent/common.js'); console.log(c.encodeCall(
   the creator approves the proof; cancelling an unclaimed task refunds the
   creator.
 
+## Testnet is an open board (no Agent ID needed)
+
+The BSC Testnet board runs TaskBoardV2 with `GATE_ENABLED=false`
+(`0xC4353D23D3b78FDbc7e01771Fa24eae4BF62e7bD`): anyone with a testnet
+wallet (tBNB) can create, claim, prove, approve, and claim BNB there — no
+Mock Agent ID, no grant step. The scripts skip the Agent ID check
+automatically when the board's gate is off (`claim.js` reads
+`GATE_ENABLED()` first). Mainnet still requires a real Agent ID on every
+action — that gate is the product, and it stays on.
+
 ## Points system (TaskBoardV2 — testnet only for now)
 
 On BSC Testnet the board runs **TaskBoardV2**

@@ -3,8 +3,9 @@
   "chainId": 97,
   "contract": "TaskBoardV2",
   "abi": "abi-v2.js",
-  "address": "0x5aCafb6d81e820Aa2FfEC7e616f26958147A7cEF",
+  "address": "0xC4353D23D3b78FDbc7e01771Fa24eae4BF62e7bD",
   "agentId": "0x9cDAE4b842d5F3d0f43323e938BbbA9626dd03cE",
+  "gateEnabled": false,
   "deployer": "0x09cd1B98D9d87D434f73Cf82D57b138Da22e33ab",
-  "deployedAt": "2026-11-25T05:05:50.106Z"
+  "deployedAt": "2026-11-25T05:38:59.734Z"
 }

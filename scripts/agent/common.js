@@ -99,7 +99,12 @@ async function getReadBoard(args) {
       const provider = new ethers.JsonRpcProvider(url, net.chainId);
       const board = new ethers.Contract(dep.address, abi, provider);
       await board.taskCount(); // probe: this endpoint really answers
-      return { board, provider, address: dep.address, agentId: dep.agentId, net };
+      // V2 exposes GATE_ENABLED; v1 has no gate switch (always gated).
+      let gateEnabled = true;
+      if (typeof board.GATE_ENABLED === "function") {
+        try { gateEnabled = await board.GATE_ENABLED(); } catch (e) { gateEnabled = true; }
+      }
+      return { board, provider, address: dep.address, agentId: dep.agentId, net, gateEnabled };
     } catch (e) {
       lastErr = e;
     }

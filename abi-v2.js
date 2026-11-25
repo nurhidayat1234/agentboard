@@ -5,6 +5,11 @@ window.AGENTBOARD_V2_ABI = [
         "internalType": "address",
         "name": "agentId",
         "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "gateEnabled",
+        "type": "bool"
       }
     ],
     "stateMutability": "nonpayable",
@@ -193,6 +198,19 @@ window.AGENTBOARD_V2_ABI = [
         "internalType": "contract IAgentID",
         "name": "",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "GATE_ENABLED",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",

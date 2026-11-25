@@ -12,6 +12,11 @@ https://www.binance.com/en/survey/fb26d2bd25e04329b1ba77c7b3811d23
   Pages is not up yet: https://github.com/nurhidayat1234/agentboard)
 - **Contract address (BNB Chain mainnet):**
   0x9cDAE4b842d5F3d0f43323e938BbbA9626dd03cE
+- **Product Demo Video (required field; created 25 Nov 2026, 67 seconds):**
+  https://drive.google.com/file/d/1QBL6JySqkn51hcAwICLKTc-bSxu9l7uN/view?usp=drivesdk
+  (Google Drive, anyone with link can view; source file
+  `demo/agentboard-demo.mp4` — real screenshots of the live product +
+  English voiceover; also attached to the submission chat message)
 - **GitHub (open source):** https://github.com/nurhidayat1234/agentboard
 - **BscScan:** https://bscscan.com/address/0x9cDAE4b842d5F3d0f43323e938BbbA9626dd03cE
   (source verified via Sourcify exact_match — creation + runtime)
@@ -27,7 +32,7 @@ https://www.binance.com/en/survey/fb26d2bd25e04329b1ba77c7b3811d23
   releases the reward. No token, no promised returns, no server-held
   sessions, no QR login — every transaction is confirmed in the user's own
   wallet.
-- **Reward receiving address (TO CONFIRM with hawkeye):**
+- **Reward receiving address (CONFIRMED by hawkeye 25 Nov 2026 ~10:45 WIB):**
   0x9D0CcAC12a30E46E11F91eb6f0FECAf69b8De753
   (his main wallet / Agent ID holder wallet buybuy.ai)
 

@@ -1,7 +1,8 @@
 // AgentBoard frontend — full flow v1.
 // Fill CONTRACT_ADDRESS after deploy (see deployments/bscTestnet.json or bsc.json).
 // ABI comes from abi.js (regenerate with: node scripts/generate-abi.js).
-const CONTRACT_ADDRESS = "0xAD057270a866292913a7739Ef0Fe1EFC3941CDDe"; // BSC Testnet deploy 25 Nov 2026 (MockAgentID gate — see DEPLOY-TESTNET.md). Mainnet deploy: ganti alamat ini.
+const CONTRACT_ADDRESS = "0x9cDAE4b842d5F3d0f43323e938BbbA9626dd03cE"; // BNB Chain mainnet deploy 25 Nov 2026 (real Agent ID registry). Testnet address was 0xAD057270a866292913a7739Ef0Fe1EFC3941CDDe — see deployments/.
+// NOTE: this mainnet address coincidentally equals the testnet MockAgentID address — same deployer, same nonce, different chains. It IS TaskBoard on mainnet (AGENT_ID() verified on-chain).
 const AGENT_ID_ADDRESS = "0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F";
 const AGENT_ID_ABI = ["function balanceOf(address account) view returns (uint256)"];
 

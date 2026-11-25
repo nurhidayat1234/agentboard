@@ -1,4 +1,5 @@
 node_modules/
+.venv-test/
 .env
 .env.*
 deployer-testnet-key.txt

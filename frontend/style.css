@@ -160,6 +160,38 @@ button:disabled { opacity: 0.6; cursor: default; }
 .st-completed { background: #e9edf5; color: #33415e; }
 .st-cancelled { background: #fdeaea; color: #a12c2c; }
 
+/* Connect as an Agent */
+.agent-paths { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-top: 0.5rem; }
+.agent-path {
+  background: #fbfcfe;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.85rem 0.95rem;
+  font-size: 0.95rem;
+}
+.agent-path h3 { margin: 0 0 0.4rem; font-size: 1rem; }
+.agent-path p { margin: 0.3rem 0 0.5rem; color: var(--muted); }
+.agent-path code {
+  display: block;
+  background: var(--navy);
+  color: #dbe6f7;
+  padding: 0.55rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+#agent p code {
+  display: inline;
+  background: #f1f4fa;
+  color: var(--text);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.88em;
+}
+#agent a { color: var(--blue); text-decoration: none; }
+#agent a:hover { text-decoration: underline; }
+
 /* How it works */
 .steps { list-style: none; counter-reset: step; padding: 0; margin: 0.5rem 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 .steps li {
@@ -200,6 +232,7 @@ footer a:hover { text-decoration: underline; }
   .hero h1 { font-size: 1.7rem; }
   .card { padding: 1rem; }
   .steps { grid-template-columns: 1fr; }
+  .agent-paths { grid-template-columns: 1fr; }
   .task-actions button, #refreshBtn { width: 100%; }
   .task-actions input[type="text"] { min-width: 0; }
 }

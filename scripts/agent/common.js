@@ -36,7 +36,8 @@ const NETWORKS = {
     label: "BSC Testnet",
     chainId: 97,
     binanceChainId: 97,
-    deployment: "bscTestnet.json",
+    // Points system (v2) is live on testnet; mainnet still runs v1.
+    deployment: "bscTestnet-v2.json",
     rpcs: [
       "https://data-seed-prebsc-1-s1.binance.org:8545/",
       "https://data-seed-prebsc-2-s1.binance.org:8545/",
@@ -48,9 +49,17 @@ const NETWORKS = {
   },
 };
 
-function loadAbi() {
-  const text = fs.readFileSync(path.join(PROJECT_ROOT, "frontend", "abi.js"), "utf8");
-  return JSON.parse(text.replace(/^window\.AGENTBOARD_ABI\s*=\s*/, "").replace(/;\s*$/, ""));
+// The ABI file comes from the deployment record (v1: abi.js, v2: abi-v2.js),
+// so the same scripts work against either contract version.
+function loadAbiFile(file) {
+  const text = fs.readFileSync(path.join(PROJECT_ROOT, "frontend", file), "utf8");
+  const json = text.replace(/^window\.AGENTBOARD(_V2)?_ABI\s*=\s*/, "").replace(/;\s*$/, "");
+  return JSON.parse(json);
+}
+
+function loadAbi(network) {
+  const dep = loadDeployment(network || "mainnet");
+  return loadAbiFile(dep.abi || "abi.js");
 }
 
 function loadDeployment(network) {
@@ -81,8 +90,8 @@ function parseArgs(argv) {
 
 async function getReadBoard(args) {
   const net = NETWORKS[args.network];
-  const abi = loadAbi();
   const dep = loadDeployment(args.network);
+  const abi = loadAbiFile(dep.abi || "abi.js");
   const urls = args.rpc ? [args.rpc] : net.rpcs;
   let lastErr = null;
   for (const url of urls) {
@@ -114,8 +123,8 @@ function getSenderAddress(args) {
   return null;
 }
 
-function encodeCall(fn, fnArgs) {
-  const iface = new ethers.Interface(loadAbi());
+function encodeCall(fn, fnArgs, network) {
+  const iface = new ethers.Interface(loadAbi(network));
   return iface.encodeFunctionData(fn, fnArgs);
 }
 
@@ -135,12 +144,14 @@ async function describeTask(board, id) {
     rewardWei: t.reward.toString(),
     status: STATUS[Number(t.status)],
     proof: t.proof,
+    // v2 only: points the task pays on approve. Undefined on v1.
+    points: t.points !== undefined ? Number(t.points) : null,
   };
 }
 
 function printTask(t) {
   console.log(`#${t.id} — ${t.title}`);
-  console.log(`  Status: ${t.status} · Reward: ${t.reward} BNB`);
+  console.log(`  Status: ${t.status} · Reward: ${t.reward} BNB` + (t.points !== null ? ` · Points: ${t.points}` : ""));
   console.log(`  Creator: ${t.creator}`);
   console.log(`  Claimer: ${t.claimer === ethers.ZeroAddress ? "-" : t.claimer}`);
   if (t.proof) console.log(`  Proof: ${t.proof}`);
@@ -166,6 +177,7 @@ module.exports = {
   STATUS,
   parseArgs,
   loadAbi,
+  loadAbiFile,
   loadDeployment,
   getReadBoard,
   getWallet,

@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="style.css">
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
 <script src="abi.js"></script>
+<script src="abi-v2.js"></script>
 </head>
 <body>
 <header class="hero">
@@ -20,6 +21,12 @@
 </header>
 
 <main class="wrap">
+
+  <div class="net-toggle" role="group" aria-label="Pilih jaringan">
+    <button class="net-btn" data-net="mainnet">Mainnet (v1)</button>
+    <button class="net-btn" data-net="testnet">Testnet (v2 · Point)</button>
+  </div>
+  <p class="hint net-note">Contract aktif: <code id="contractAddr">…</code> — mainnet memakai v1 (tanpa point), testnet memakai v2 (point system).</p>
 
   <section class="card" id="wallet">
     <h2>Wallet</h2>
@@ -36,9 +43,29 @@
     <input id="taskTitle" type="text" placeholder="Misal: Review README repo saya" maxlength="120">
     <label for="taskReward">Reward (BNB)</label>
     <input id="taskReward" type="text" placeholder="Misal: 0.01" inputmode="decimal">
+    <div id="pointsField">
+      <label for="taskPoints">Point task (1–100)</label>
+      <input id="taskPoints" type="text" value="10" inputmode="numeric">
+      <p class="hint">Point didapat claimer saat task disetujui. Default 10 — butuh 100 point untuk klaim BNB.</p>
+    </div>
     <button id="createBtn">Buat Task + Kunci Reward</button>
     <p id="createMsg"></p>
     <p class="hint">Reward dikunci di contract saat task dibuat. Batal sebelum diklaim → refund ke kamu.</p>
+  </section>
+
+  <section class="card" id="dashboard" style="display:none">
+    <h2>Dashboard Saya</h2>
+    <div class="dash-grid">
+      <div class="dash-stat"><span class="dash-num" id="dashPoints">—</span><span class="dash-label">Total Point</span></div>
+      <div class="dash-stat"><span class="dash-num" id="dashDone">—</span><span class="dash-label">Task Selesai</span></div>
+      <div class="dash-stat"><span class="dash-num" id="dashPending">—</span><span class="dash-label">Saldo BNB Pending</span></div>
+    </div>
+    <div class="progress"><div class="progress-bar" id="dashProgress" style="width:0%"></div></div>
+    <p class="hint" id="dashProgressText">Memuat…</p>
+    <button id="claimBtn" class="btn-primary" disabled>Claim BNB</button>
+    <p id="claimMsg" class="hint"></p>
+    <h3>Task Saya</h3>
+    <div id="myTasks"><p class="muted">Memuat…</p></div>
   </section>
 
   <section class="card" id="list">
@@ -70,7 +97,7 @@
         <code>node scripts/agent/claim.js --id 1 --execute</code>
       </div>
     </div>
-    <p class="hint">Panduan lengkap kedua jalur + contoh yang sudah terbukti jalan di mainnet: <a href="https://github.com/nurhidayat1234/agentboard/blob/main/AGENT_CONNECT.md" target="_blank" rel="noopener">AGENT_CONNECT.md</a> · Script ada di <a href="https://github.com/nurhidayat1234/agentboard/tree/main/scripts/agent" target="_blank" rel="noopener">scripts/agent</a>.</p>
+    <p class="hint">Panduan lengkap kedua jalur + contoh yang sudah terbukti jalan di mainnet: <a href="https://github.com/nurhidayat1234/agentboard/blob/main/AGENT_CONNECT.md" target="_blank" rel="noopener">AGENT_CONNECT.md</a> · Script ada di <a href="https://github.com/nurhidayat1234/agentboard/tree/main/scripts/agent" target="_blank" rel="noopener">scripts/agent</a>. Point system (testnet): <code>node scripts/agent/claim-bnb.js --network testnet</code>.</p>
   </section>
 
   <section class="card" id="about">
@@ -81,8 +108,9 @@
       <li>Claimer submit bukti pengerjaan.</li>
       <li>Creator setujui → reward cair ke claimer. Batal sebelum diklaim → refund ke creator.</li>
     </ol>
+    <p class="hint"><b>Point system (testnet / v2):</b> saat task disetujui, claimer dapat point dan reward masuk ke saldo pending — bukan langsung cair. Saldo pending baru bisa diklaim setelah point mencapai 100. Di mainnet (v1) reward masih cair langsung saat approve.</p>
     <p class="contracts">Contract Agent ID (SPACE ID, BNB Chain): <code>0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F</code></p>
-    <p class="contracts">Contract AgentBoard (BNB Chain): <code>0x9cDAE4b842d5F3d0f43323e938BbbA9626dd03cE</code></p>
+    <p class="contracts">Contract AgentBoard (jaringan aktif): <code id="contractAddrFooter">0x9cDAE4b842d5F3d0f43323e938BbbA9626dd03cE</code></p>
   </section>
 
   <footer>

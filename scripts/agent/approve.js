@@ -35,8 +35,13 @@ async function main() {
   if (sender.toLowerCase() !== task.creator.toLowerCase()) {
     c.fail(`Only the creator (${task.creator}) can approve Task #${task.id}.`);
   }
+  const isV2 = typeof board.claimBNB === "function";
   console.log(`Task #${task.id} — ${task.title} (${task.status})`);
-  console.log(`Approving releases ${task.reward} BNB to claimer ${task.claimer}.`);
+  if (isV2) {
+    console.log(`Approving gives claimer ${task.claimer} ${task.points} points and moves ${task.reward} BNB into their pending balance (claimable at 100 points).`);
+  } else {
+    console.log(`Approving releases ${task.reward} BNB to claimer ${task.claimer}.`);
+  }
   console.log(`Simulating approveTask(${task.id})…`);
   const data = c.encodeCall("approveTask", [task.id]);
   const readOnly = board.connect(provider);
@@ -71,7 +76,11 @@ async function main() {
   const receipt = await tx.wait();
   console.log(`Confirmed in block ${receipt.blockNumber} (status ${receipt.status}).`);
   const after = await c.describeTask(board, task.id);
-  console.log(`Task #${after.id} is now ${after.status}. Reward ${task.reward} BNB released to ${task.claimer}.`);
+  if (isV2) {
+    console.log(`Task #${after.id} is now ${after.status}. ${task.points} points earned; ${task.reward} BNB now pending for ${task.claimer}.`);
+  } else {
+    console.log(`Task #${after.id} is now ${after.status}. Reward ${task.reward} BNB released to ${task.claimer}.`);
+  }
 }
 
 main().catch((e) => c.fail(e.reason || e.message || e));

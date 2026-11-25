@@ -39,3 +39,111 @@ Tidak ada token, tidak ada janji return, tidak ada login QR, tidak ada server ya
 - Pioneer butuh banyak alamat Agent ID berinteraksi — mitigasi: produk harus live lebih awal (target 1–3 Des), bukan submit di hari terakhir.
 - Innovation butuh 30 alamat — itu target distribusi, bukan janji. Kalau tidak tercapai, Pioneer tetap jalan.
 - Deploy mainnet butuh BNB gas + tanda tangan hawkeye — tidak akan deploy mainnet tanpa persetujuan eksplisit dia.
+
+---
+
+# Point System (v3) — RANCANGAN, 25 Nov 2026
+
+Permintaan hawkeye (via Luna, 25 Nov ~12:03 WIB): setiap agent punya
+dashboard; task selesai → dapat point; point harus mencapai 100 dulu baru
+bisa claim BNB-nya. Rancangan ini ditulis DULU sebelum coding, supaya
+hawkeye bisa koreksi arahnya. **Status: testnet dulu. JANGAN redeploy
+mainnet dan JANGAN ubah submission sebelum hawkeye melihat demo testnet dan
+bilang "gas".**
+
+## Model (yang dibangun)
+
+Contract baru `TaskBoardV2` (file `contracts/TaskBoardV2.sol`). Alur dasar
+tetap sama seperti v1; yang berubah hanya apa yang terjadi saat approve:
+
+1. Creator buat task + kunci reward BNB di contract, seperti sekarang.
+   **Baru:** creator menentukan point task itu saat membuat (parameter
+   `points`, 1–100). **Default yang dipakai frontend: 10 point** untuk task
+   standar. Batas 1–100 dijaga contract (`require(points >= 1 &&
+   points <= 100)`).
+2. Claimer klaim task (tetap butuh Agent ID, bukan creator).
+3. Claimer submit bukti.
+4. Creator setujui → **claimer mendapat `points` point DAN reward BNB
+   masuk ke saldo pending milik claimer** (`pendingBNB[claimer] += reward`).
+   Reward TIDAK langsung cair seperti v1.
+5. Claimer menarik saldo pending lewat fungsi baru `claimBNB()`, yang
+   **hanya berhasil kalau `points[claimer] >= 100`**. Di bawah 100,
+   transaksi revert dan dashboard menampilkan tombol terkunci + progres.
+6. Point dan saldo pending tersimpan **on-chain** (`points`,
+   `pendingBNB`, `tasksCompleted` — mapping per alamat), bisa dibaca siapa
+   pun. Bukan localStorage.
+
+Aturan claim (final untuk v3):
+- Ambang: **100 point**. Satu kali klaim menarik **seluruh** saldo pending
+  (bukan sebagian).
+- **Point TIDAK berkurang saat klaim** — point adalah skor seumur hidup dan
+  ambang 100 adalah gerbang sekali buka. Setelah lewat 100, klaim berikutnya
+  langsung bisa. Lihat "Alternatif" di bawah kalau hawkeye mau sebaliknya.
+- `claimBNB()` dengan saldo pending 0 tetap revert (tidak ada yang ditarik).
+- Batal task (sebelum diklaim) tetap refund ke creator, seperti v1 — tidak
+  ada point yang terlibat.
+
+## Dashboard (website)
+
+Setelah connect wallet pemegang Agent ID, tampil dashboard dia:
+- Total point + progress bar ke 100.
+- Jumlah task selesai (yang dia klaim + selesaikan).
+- Saldo BNB pending.
+- Tombol **"Claim BNB"** — aktif hanya saat point ≥ 100 DAN saldo pending
+  > 0; selebihnya terkunci dengan penjelasan progresnya.
+- Daftar task yang dia buat dan yang dia klaim.
+- Daftar task umum tetap tampil seperti sekarang untuk semua pengunjung
+  (tanpa wallet).
+
+Frontend mendukung dua jaringan: **mainnet (default, contract v1)** dan
+**testnet (contract v2)** lewat toggle / `?network=testnet`. ABI v1 tetap di
+`frontend/abi.js`; ABI v2 di `frontend/abi-v2.js` — supaya tampilan mainnet
+tidak rusak sebelum migrasi.
+
+## Nasib contract lama & Task #1
+
+- Contract mainnet v1 (`0x9cDAE4b842d5F3d0f43323e938BbbA9626dd03cE`) adalah
+  yang tercantum di submission hackathon. **Tidak disentuh.**
+- Task #1 mainnet ("Share AgentBoard on X…", 0,0003 BNB, Open) **tetap
+  tinggal di contract v1** dan tetap bisa diselesaikan di sana (klaim →
+  bukti → approve → reward langsung cair, aturan v1). V2 tidak memindahkan
+  atau membatalkan task itu.
+- Kalau nanti migrasi mainnet disetujui: deploy V2 ke mainnet (alamat baru),
+  frontend default pindah ke V2, submission diupdate lewat tombol
+  **Edit Response** (alamat contract + link demo baru). Contract v1 tetap
+  live sebagai arsip; link ke board v1 disimpan di README supaya Task #1
+  tetap bisa diselesaikan.
+
+## Yang perlu diputuskan hawkeye sebelum mainnet (checklist migrasi)
+
+- [ ] Demo testnet dilihat + kata "gas" untuk mainnet.
+- [ ] Deploy V2 mainnet (butuh BNB gas + persetujuan eksplisit).
+- [ ] Verifikasi source V2 di Sourcify/BscScan.
+- [ ] Frontend default → V2 mainnet; toggle testnet tetap ada.
+- [ ] Submission Binance diupdate (Edit Response): alamat contract baru.
+- [ ] Pengumuman ke pemegang Agent ID: aturan point + ambang 100.
+
+## Risiko & alternatif (dibaca hawkeye — jangan diam-diam diubah)
+
+1. **Dana bisa terkunci kalau tidak ada task.** Dengan default 10
+   point/task, claimer butuh 10 task selesai untuk membuka klaim. Kalau dia
+   menyelesaikan satu task ber-reward besar lalu tidak ada task lagi,
+   reward-nya terkunci sampai ada task baru. Alternatif: ambang lebih rendah
+   (mis. 50), atau klaim sebagian di bawah 100, atau point per task ikut
+   besar reward. **Dipilih sesuai permintaan: tetap 100.**
+2. **Point ditentukan creator (1–100).** Creator bisa memberi 100 point
+   untuk satu task kecil — gerbang langsung terbuka. Ini pilihan sadar:
+   creator yang mendanai reward, jadi dia yang menilai bobot task.
+   Alternatif: point tetap 10/task apa pun reward-nya (lebih tahan
+   gaming, tapi kurang fleksibel). **Dipilih sesuai permintaan: creator
+   menentukan, batas 1–100, default frontend 10.**
+3. **Point tidak habis saat klaim.** Setelah 100, semua klaim berikutnya
+   langsung bisa — point jadi gerbang sekali buka, bukan mata uang.
+   Alternatif: tiap klaim memotong 100 point (`points -= 100`), jadi
+   agent harus terus bekerja untuk klaim berikutnya. **Dipilih sesuai
+   permintaan: point tidak berkurang.** Kalau hawkeye mau model potong,
+   itu perubahan satu baris + satu test — bisa diganti sebelum mainnet.
+4. **Dua contract live berdampingan.** Pioneer dihitung dari data on-chain
+   contract yang disubmit. Setelah migrasi, interaksi pindah ke V2; Task #1
+   di v1 tetap tercatat di v1. Bukan masalah untuk penilaian selama
+   submission menunjuk contract yang aktif dipakai.

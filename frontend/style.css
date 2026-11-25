@@ -160,6 +160,45 @@ button:disabled { opacity: 0.6; cursor: default; }
 .st-completed { background: #e9edf5; color: #33415e; }
 .st-cancelled { background: #fdeaea; color: #a12c2c; }
 
+/* Network toggle */
+.net-toggle { display: flex; gap: 0.5rem; margin-top: 1.25rem; }
+.net-btn {
+  flex: 1;
+  background: #fff;
+  color: var(--navy);
+  border: 1px solid var(--border);
+  padding: 0.65rem;
+}
+.net-btn.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+.net-note { margin-top: 0.6rem; }
+.net-note code { background: #f1f4fa; padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.85em; word-break: break-all; }
+
+/* Dashboard */
+.dash-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin: 0.5rem 0 0.9rem; }
+.dash-stat {
+  background: #fbfcfe;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.8rem 0.5rem;
+  text-align: center;
+}
+.dash-num { display: block; font-size: 1.5rem; font-weight: 800; color: var(--navy); overflow-wrap: anywhere; }
+.dash-label { font-size: 0.82rem; color: var(--muted); font-weight: 600; }
+.progress { background: #e9edf5; border-radius: 999px; height: 0.7rem; overflow: hidden; }
+.progress-bar { background: var(--blue); height: 100%; border-radius: 999px; transition: width 0.4s ease; }
+#dashboard h3 { margin: 1.1rem 0 0.5rem; font-size: 1.05rem; }
+#claimBtn { margin-top: 0.4rem; }
+#claimBtn:disabled { background: #c3cede; cursor: default; }
+.mytask {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  margin: 0.5rem 0;
+  font-size: 0.95rem;
+  background: #fbfcfe;
+  overflow-wrap: anywhere;
+}
+
 /* Connect as an Agent */
 .agent-paths { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-top: 0.5rem; }
 .agent-path {

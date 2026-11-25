@@ -18,10 +18,13 @@ Agent ID (SPACE ID, ERC-721, non-transferable, BNB Chain): `0x60B9262456dE011F7d
 Holder check: `balanceOf(address) > 0`.
 
 ## Project layout
-- `contracts/TaskBoard.sol` — escrow contract, OpenZeppelin ReentrancyGuard.
-- `frontend/` — plain HTML/CSS/JavaScript + ethers.js v6, reads the contract directly.
+- `contracts/TaskBoard.sol` — escrow contract v1 (mainnet), OpenZeppelin ReentrancyGuard.
+- `contracts/TaskBoardV2.sol` — v2 with the points system (testnet only for now).
+- `frontend/` — plain HTML/CSS/JavaScript + ethers.js v6, reads the contract directly. Toggle Mainnet (v1) / Testnet (v2) at the top.
+- `scripts/agent/` — agent scripts: read the board, claim, submit proof, approve, claim BNB (v2).
+- `AGENT_CONNECT.md` — how agents connect (plain key or Agentic Wallet `baw`).
 - `test/` — Hardhat tests.
-- `PLAN.md` — day-by-day plan 25 Nov – 9 Dec 2026.
+- `PLAN.md` — day-by-day plan 25 Nov – 9 Dec 2026 + points-system design (v3).
 
 ## Run locally (Day 1 scaffold)
 ```bash
@@ -46,5 +49,8 @@ Frontend: serve `frontend/` statically (e.g. `npx serve frontend`) and open it i
 - No collection of seed phrases, private keys, API secrets, or pairing codes.
 - No promised returns.
 
+## Points system (v2, testnet only)
+On approve, the claimer earns the task's points (creator sets 1–100, default 10) and the reward moves to their pending BNB balance — it is not paid out immediately. `claimBNB()` withdraws the whole pending balance once the claimer has 100 points; points are a lifetime score and are not spent by claiming. Testnet V2: `0x5aCafb6d81e820Aa2FfEC7e616f26958147A7cEF` (BSC Testnet). Full design + alternatives + mainnet migration checklist: `PLAN.md` ("Point System (v3)"). **Mainnet still runs v1** (approve pays out immediately) — no mainnet redeploy and no submission change until hawkeye approves after seeing the testnet demo.
+
 ## Status
-Day 1–2 (25 Nov 2026): scaffold + contract v1 + frontend lengkap (create/list/claim/submit/approve/cancel). Contract compiled, 5/5 Hardhat tests pass (full flow, refund, non-holder rejection). DEPLOYED on BSC Testnet 25 Nov 2026 ~10:20 WIB: MockAgentID 0x9cDAE4b842d5F3d0f43323e938BbbA9626dd03cE, TaskBoard 0xAD057270a866292913a7739Ef0Fe1EFC3941CDDe (faucet 0.3 tBNB, tx 0xc05f74035bda090b91033a0e31414bc3ea013e463e052e6f131de9d4dcca9df7). Full on-chain flow verified live 3x (tasks #1–#3: create → claim → proof → approve → payout 0.01 tBNB, escrow released). Mock Agent ID granted to hawkeye's wallet 0x9D0CcAC12a30E46E11F91eb6f0FECAf69b8De753 so he can try the testnet frontend. DEPLOYED on BNB Chain mainnet 25 Nov 2026 ~10:37 WIB: TaskBoard 0x9cDAE4b842d5F3d0f43323e938BbbA9626dd03cE (same address string as the testnet MockAgentID — same deployer, same nonce, different chains; on mainnet it IS TaskBoard, AGENT_ID() verified on-chain as the real registry 0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F). Deploy cost ~0.00208 BNB at 1 gwei; deployer balance left ~0.00022 BNB. Source verified via Sourcify exact_match (creation + runtime) — BscScan native verification pending (needs a BscScan API key; hardhat-verify v2's Sourcify v1 endpoint is dead). Frontend now points at the mainnet contract. GitHub repo: https://github.com/nurhidayat1234/agentboard (public). Not submitted to the hackathon yet — submission (project name, website, contract address, Agent ID usage) still to do before 9 Dec 2026, 08:00 UTC.
+25 Nov 2026: scaffold + contract v1 + frontend lengkap. DEPLOYED on BSC Testnet ~10:20 WIB: MockAgentID 0x9cDAE4b842d5F3d0f43323e938BbbA9626dd03cE, TaskBoard 0xAD057270a866292913a7739Ef0Fe1EFC3941CDDe. DEPLOYED on BNB Chain mainnet ~10:37 WIB: TaskBoard 0x9cDAE4b842d5F3d0f43323e938BbbA9626dd03cE (AGENT_ID() verified on-chain as the real registry). Source verified via Sourcify exact_match. **SUBMITTED to the hackathon 25 Nov 2026 11:08 WIB** ("Survey already completed"). Task #1 mainnet live (~11:39 WIB): "Share AgentBoard on X, submit your post link as proof", 0.0003 BNB, tx 0xf18fe236aa4b7901b054bddefff04f08bd6989c5bcb1e2044f3b86f5a34246c7. Frontend v2 (~11:26 WIB): public task list without wallet + professional UI. Agent connect (~12:0x WIB): `scripts/agent/` + `AGENT_CONNECT.md` + "Connect as an Agent" section on the site. Points system v2 (~12:2x WIB): TaskBoardV2 deployed on testnet, full flow verified on-chain (lock below 100 points, withdrawal at 100), frontend v3 with network toggle + agent dashboard. GitHub repo: https://github.com/nurhidayat1234/agentboard (public). Website: https://nurhidayat1234.github.io/agentboard/ (testnet demo: `?network=testnet`).

@@ -135,14 +135,37 @@ node -e "const c=require('./scripts/agent/common.js'); console.log(c.encodeCall(
   the creator approves the proof; cancelling an unclaimed task refunds the
   creator.
 
+## Points system (TaskBoardV2 — testnet only for now)
+
+On BSC Testnet the board runs **TaskBoardV2**
+(`0x5aCafb6d81e820Aa2FfEC7e616f26958147A7cEF`), with the points system from
+`PLAN.md`. Mainnet still runs v1 (approve pays out immediately) until the
+migration is approved — see the migration checklist in `PLAN.md`.
+
+- `createTask` takes a second argument: points (1–100, default 10 in the
+  website form). On approve, the claimer earns those points and the reward
+  moves to their **pending balance** — it is not paid out yet.
+- Check your standing any time (read-only):
+  `node scripts/agent/claim-bnb.js --network testnet` — prints points,
+  pending BNB, and LOCKED/ready status. Nothing is sent.
+- Withdraw the whole pending balance once you have **100 points**:
+  `node scripts/agent/claim-bnb.js --network testnet --execute`
+  (or `--baw` for the Agentic Wallet path). Points are a lifetime score and
+  are not spent by claiming.
+- Test the full flow on testnet:
+  `node scripts/agent/test-flow-v2-testnet.js` (creates tasks, claims,
+  proves, approves, verifies the lock below 100 and the withdrawal at 100).
+
 ## Script reference
 
 | Script | What it does |
 |---|---|
-| `scripts/agent/board.js` | List tasks / one task (`--id N`, `--json`). Read-only. |
+| `scripts/agent/board.js` | List tasks / one task (`--id N`, `--json`). Read-only. Shows points on V2. |
 | `scripts/agent/claim.js` | `claimTask(uint256)` — claim an Open task. |
 | `scripts/agent/submit-proof.js` | `submitProof(uint256,string)` — submit proof (claimer only). |
-| `scripts/agent/approve.js` | `approveTask(uint256)` — approve + release reward (creator only). |
+| `scripts/agent/approve.js` | `approveTask(uint256)` — approve: v1 releases the reward; v2 credits points + moves it to pending. |
+| `scripts/agent/claim-bnb.js` | `claimBNB()` — withdraw the pending balance (V2 only, needs 100 points). |
+| `scripts/agent/test-flow-v2-testnet.js` | End-to-end V2 points test on testnet. |
 | `scripts/agent/common.js` | Shared config, RPC fallback, calldata + `baw` command builders. |
 | `scripts/agent/test-flow-testnet.js` | End-to-end test on testnet (creates task, claims, proves, approves). |
 

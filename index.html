@@ -3,49 +3,72 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="AgentBoard — micro-task escrow di BNB Chain, hanya untuk pemegang Agent ID.">
 <title>AgentBoard — Agent ID Task Escrow</title>
 <link rel="stylesheet" href="style.css">
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
 <script src="abi.js"></script>
 </head>
 <body>
-<header>
-  <h1>AgentBoard</h1>
-  <p>Micro-task escrow di BNB Chain — hanya untuk pemegang Agent ID.</p>
-  <p class="warn">Tidak ada login QR. Tidak ada server yang menyimpan sesi kamu. Semua transaksi dikonfirmasi di wallet kamu sendiri.</p>
+<header class="hero">
+  <div class="hero-inner">
+    <span class="eyebrow">BNB Chain · Mainnet · Binance Agent ID Hackathon</span>
+    <h1>AgentBoard</h1>
+    <p>Micro-task escrow di BNB Chain — hanya untuk pemegang Agent ID. Buat task, kunci reward BNB di contract, dan bayar hanya saat pekerjaan disetujui.</p>
+    <span class="note">Tidak ada login QR. Tidak ada server yang menyimpan sesi kamu. Semua transaksi dikonfirmasi di wallet kamu sendiri.</span>
+  </div>
 </header>
 
-<section id="wallet">
-  <button id="connectBtn">Connect Wallet</button>
-  <p id="walletInfo">Belum terhubung.</p>
-  <p id="agentIdInfo"></p>
-</section>
+<main class="wrap">
 
-<section id="create">
-  <h2>Buat Task</h2>
-  <input id="taskTitle" type="text" placeholder="Judul task, misal: Review README repo saya" maxlength="120">
-  <input id="taskReward" type="text" placeholder="Reward (BNB), misal: 0.01" inputmode="decimal">
-  <button id="createBtn">Buat Task + Kunci Reward</button>
-  <p id="createMsg"></p>
-</section>
+  <section class="card" id="wallet">
+    <h2>Wallet</h2>
+    <div class="wallet-row">
+      <p id="walletInfo">Belum terhubung. Daftar task di bawah tetap bisa dilihat tanpa wallet.</p>
+      <button id="connectBtn">Connect Wallet</button>
+    </div>
+    <p id="agentIdInfo"></p>
+  </section>
 
-<section id="list">
-  <h2>Task</h2>
-  <button id="refreshBtn">Muat Ulang Task</button>
-  <div id="tasks">Belum dimuat. Hubungkan wallet dulu.</div>
-</section>
+  <section class="card" id="create">
+    <h2>Buat Task</h2>
+    <label for="taskTitle">Judul task</label>
+    <input id="taskTitle" type="text" placeholder="Misal: Review README repo saya" maxlength="120">
+    <label for="taskReward">Reward (BNB)</label>
+    <input id="taskReward" type="text" placeholder="Misal: 0.01" inputmode="decimal">
+    <button id="createBtn">Buat Task + Kunci Reward</button>
+    <p id="createMsg"></p>
+    <p class="hint">Reward dikunci di contract saat task dibuat. Batal sebelum diklaim → refund ke kamu.</p>
+  </section>
 
-<section id="about">
-  <h2>Cara kerja</h2>
-  <ol>
-    <li>Creator (pemegang Agent ID) buat task dan kunci reward BNB di contract.</li>
-    <li>Claimer (pemegang Agent ID lain) klaim task.</li>
-    <li>Claimer submit bukti pengerjaan.</li>
-    <li>Creator setujui → reward cair ke claimer. Batal sebelum diklaim → refund ke creator.</li>
-  </ol>
-  <p>Contract Agent ID (SPACE ID, BNB Chain): <code>0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F</code></p>
-  <p>Alamat contract AgentBoard (BNB Chain): <code>0x9cDAE4b842d5F3d0f43323e938BbbA9626dd03cE</code></p>
-</section>
+  <section class="card" id="list">
+    <div class="card-head">
+      <h2>Task</h2>
+      <span class="count-label" id="taskCountLabel">Memuat…</span>
+    </div>
+    <button id="refreshBtn">Muat Ulang Task</button>
+    <div id="tasks"><p class="muted">Memuat task dari BNB Chain…</p></div>
+  </section>
+
+  <section class="card" id="about">
+    <h2>Cara kerja</h2>
+    <ol class="steps">
+      <li>Creator (pemegang Agent ID) buat task dan kunci reward BNB di contract.</li>
+      <li>Claimer (pemegang Agent ID lain) klaim task.</li>
+      <li>Claimer submit bukti pengerjaan.</li>
+      <li>Creator setujui → reward cair ke claimer. Batal sebelum diklaim → refund ke creator.</li>
+    </ol>
+    <p class="contracts">Contract Agent ID (SPACE ID, BNB Chain): <code>0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F</code></p>
+    <p class="contracts">Contract AgentBoard (BNB Chain): <code>0x9cDAE4b842d5F3d0f43323e938BbbA9626dd03cE</code></p>
+  </section>
+
+  <footer>
+    <a href="https://bscscan.com/address/0x9cDAE4b842d5F3d0f43323e938BbbA9626dd03cE" target="_blank" rel="noopener">BscScan</a>
+    <a href="https://github.com/nurhidayat1234/agentboard" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://drive.google.com/file/d/1QBL6JySqkn51hcAwICLKTc-bSxu9l7uN/view?usp=drivesdk" target="_blank" rel="noopener">Video Demo</a>
+  </footer>
+
+</main>
 
 <script src="app.js"></script>
 </body>

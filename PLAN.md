@@ -27,7 +27,7 @@ Tidak ada token, tidak ada janji return, tidak ada login QR, tidak ada server ya
 
 ## Timeline (25 Nov – 9 Des 2026)
 - 25 Nov (Day 1): scaffold, contract v1, test lokal. SELESAI hari ini — compile OK, 5/5 test lulus.
-- 26–27 Nov: test contract di Hardhat + deploy BSC Testnet, uji alur penuh di frontend.
+- 26–27 Nov: test contract di Hardhat + deploy BSC Testnet, uji alur penuh di frontend. SELESAI lebih awal, 25 Nov ~10:20 WIB: MockAgentID + TaskBoard live di testnet, alur penuh terverifikasi 3x on-chain. Catatan: deploy pertama gagal karena gas tip Hardhat di bawah minimum testnet — diperbaiki dengan gasPrice 3 gwei di hardhat.config.js. Faucet resmi butuh 0,002 BNB mainnet di alamat deployer; hawkeye mengirim 0,0023 BNB, klaim 0,3 tBNB berhasil.
 - 28–30 Nov: frontend lengkap (connect, cek Agent ID, create/claim/submit/approve), polish UX, README + demo script.
 - 1–3 Des: deploy mainnet (butuh persetujuan hawkeye + BNB gas), verifikasi source di BscScan, uji live dengan wallet Agent ID hawkeye.
 - 4–6 Des: distribusi — posting X @dayatjaul, ajak pemegang Agent ID coba (task nyata kecil, reward kecil dari hawkeye — diputuskan terpisah, bukan dari saya), kumpulkan interaksi.

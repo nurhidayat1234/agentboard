@@ -1,7 +1,7 @@
 // AgentBoard frontend — full flow v1.
 // Fill CONTRACT_ADDRESS after deploy (see deployments/bscTestnet.json or bsc.json).
 // ABI comes from abi.js (regenerate with: node scripts/generate-abi.js).
-const CONTRACT_ADDRESS = ""; // contoh: "0x..."
+const CONTRACT_ADDRESS = "0xAD057270a866292913a7739Ef0Fe1EFC3941CDDe"; // BSC Testnet deploy 25 Nov 2026 (MockAgentID gate — see DEPLOY-TESTNET.md). Mainnet deploy: ganti alamat ini.
 const AGENT_ID_ADDRESS = "0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F";
 const AGENT_ID_ABI = ["function balanceOf(address account) view returns (uint256)"];
 

@@ -1,0 +1,9 @@
+{
+  "network": "bscTestnet",
+  "chainId": 97,
+  "contract": "TaskBoard",
+  "address": "0xAD057270a866292913a7739Ef0Fe1EFC3941CDDe",
+  "agentId": "0x9cDAE4b842d5F3d0f43323e938BbbA9626dd03cE",
+  "deployer": "0x09cd1B98D9d87D434f73Cf82D57b138Da22e33ab",
+  "deployedAt": "2026-11-25T03:20:06.348Z"
+}
